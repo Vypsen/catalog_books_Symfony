@@ -1,0 +1,44 @@
+version: '3'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: ./docker/php/Dockerfile
+    container_name: books
+    restart: unless-stopped
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    working_dir: /var/www/books
+    volumes:
+      - '.:/var/www/books'
+    depends_on:
+      - database
+  nginx:
+    container_name: server_books
+    image: 'nginx:alpine'
+    restart: unless-stopped
+    ports:
+      - '80:80'
+    volumes:
+      - '.:/var/www/books'
+      - './docker/nginx/conf.d/:/etc/nginx/conf.d/'
+    depends_on:
+      - app
+  database:
+    container_name: database
+
+    image: mysql:8.0
+    cap_add:
+      - SYS_NICE
+    restart: always
+    environment:
+      - MYSQL_DATABASE=quotes
+      - MYSQL_ROOT_PASSWORD=mauFJcuf5dhRMQrjj
+    ports:
+      - '3306:3306'
+    volumes:
+      - database:/var/lib/mysql
+
+volumes:
+  database:
+    driver: local
